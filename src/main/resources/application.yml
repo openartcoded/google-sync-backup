@@ -1,0 +1,14 @@
+application:
+  pathToSync: ${PATH_TO_SYNC:/tmp/some-dir}
+  idempotentFilePath: ${IDEM_POTENT_FILE_PATH:/tmp/idempot}
+spring:
+  config:
+    import:
+      - classpath:config/artemis.yml
+      - classpath:config/drive.yml
+  application:
+    name: artcoded-sync
+camel:
+  springboot:
+    name: camel-${spring.application.name}
+    main-run-controller: true

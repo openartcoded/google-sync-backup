@@ -1,0 +1,4 @@
+drive:
+  credentials: ${DRIVE_CREDENTIALS_FILE:/Users/bittichn/artcoded-cred.json}
+  sharedDirectory: ${DRIVE_SHARED_DIRECTORY:v2022.artcoded-dump-dev}
+  application-name: ${APPLICATION_NAME:${spring.application.name}}
