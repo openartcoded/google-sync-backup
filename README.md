@@ -6,7 +6,7 @@ sync a folder to google drive
 
 ```
   google-drive-sync:
-    image: artcoded/drive-sync
+    image: nbittich/drive-sync
     networks:
       artcoded:
     volumes:
