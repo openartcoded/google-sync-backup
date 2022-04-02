@@ -20,7 +20,7 @@ git pull
 
 git checkout $releaseVersion
 docker build -t artcoded/drive-sync:v$releaseVersion .
-docker tag artcoded/drive-sync:v$releaseVersion artcoded:5000/artcoded/drive-sync:v$releaseVersion
-docker push artcoded:5000/artcoded/drive-sync:v$releaseVersion
+docker tag artcoded/drive-sync:v$releaseVersion artcoded/drive-sync:v$releaseVersion
+docker push artcoded/drive-sync:v$releaseVersion
 
 git checkout main
