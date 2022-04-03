@@ -16,11 +16,4 @@ mvn --batch-mode -Dtag=$releaseVersion release:prepare \
                  -DdevelopmentVersion=$nextVersion
 
 mvn release:clean
-git pull
 
-git checkout $releaseVersion
-docker build -t nbittich/drive-sync:v$releaseVersion .
-docker tag nbittich/drive-sync:v$releaseVersion nbittich/drive-sync:v$releaseVersion
-docker push nbittich/drive-sync:v$releaseVersion
-
-git checkout main

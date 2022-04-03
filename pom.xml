@@ -25,7 +25,7 @@
 
   <scm>
     <connection>
-      scm:git:git@github.com:bittichbe/artcoded-sync-backup.git
+      scm:git:git@github.com:openartcoded/google-sync-backup.git
     </connection>
     <tag>HEAD</tag>
   </scm>
