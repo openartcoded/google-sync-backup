@@ -28,8 +28,8 @@ public class DriveService {
     ByteArrayContent mediaContent = new ByteArrayContent(contentType, file);
 
     File upload = drive.files().create(fileMetadata, mediaContent)
-                       .setFields("id, parents")
-                       .execute();
+      .setFields("id, parents")
+      .execute();
     return upload.getId();
   }
 

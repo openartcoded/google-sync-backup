@@ -4,7 +4,6 @@ import org.apache.camel.Body;
 import org.apache.camel.Exchange;
 import org.apache.camel.ExchangePattern;
 import org.apache.camel.Header;
-import org.apache.camel.InOnly;
 import org.apache.camel.builder.RouteBuilder;
 import org.springframework.stereotype.Component;
 
@@ -26,20 +25,20 @@ public class SyncRouteBuilder extends RouteBuilder {
   @Override
   public void configure() throws Exception {
     onException(Exception.class)
-            .handled(true)
-            .log("IOException occurred due: ${exception.message}")
+      .handled(true)
+      .log("IOException occurred due: ${exception.message}")
     ;
     from("file:{{application.pathToSync}}?noop=true&idempotent=true&idempotentRepository=#fileIdempotentRepository")
-            .routeId("SyncRoute::Entrypoint")
-            .log("receiving file '${headers.%s}', will sync it to drive".formatted(Exchange.FILE_NAME))
-            .setProperty(HEADER_TITLE, simple("'${headers.%s}', has been uploaded to drive".formatted(Exchange.FILE_NAME)))
-            .setProperty(HEADER_TYPE, constant(SYNC_DATA_DRIVE))
-            .convertBodyTo(byte[].class)
-            .bean(() -> this, "sync")
-            .setHeader(CORRELATION_ID, body())
-            .setHeader(HEADER_TITLE, exchangeProperty(HEADER_TITLE))
-            .setHeader(HEADER_TYPE, exchangeProperty(HEADER_TYPE))
-            .to(ExchangePattern.InOnly, NOTIFICATION_ENDPOINT)
+      .routeId("SyncRoute::Entrypoint")
+      .log("receiving file '${headers.%s}', will sync it to drive".formatted(Exchange.FILE_NAME))
+      .setProperty(HEADER_TITLE, simple("'${headers.%s}', has been uploaded to drive".formatted(Exchange.FILE_NAME)))
+      .setProperty(HEADER_TYPE, constant(SYNC_DATA_DRIVE))
+      .convertBodyTo(byte[].class)
+      .bean(() -> this, "sync")
+      .setHeader(CORRELATION_ID, body())
+      .setHeader(HEADER_TITLE, exchangeProperty(HEADER_TITLE))
+      .setHeader(HEADER_TYPE, exchangeProperty(HEADER_TYPE))
+      .to(ExchangePattern.InOnly, NOTIFICATION_ENDPOINT)
     ;
   }
 

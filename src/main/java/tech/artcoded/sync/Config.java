@@ -33,7 +33,7 @@ public class Config {
   private String applicationName;
 
   @Bean("fileIdempotentRepository")
-  public IdempotentRepository fileIdempotentRepository(){
+  public IdempotentRepository fileIdempotentRepository() {
     return FileIdempotentRepository.fileIdempotentRepository(new java.io.File(idempotentFilePath));
   }
 
@@ -41,20 +41,20 @@ public class Config {
   public DriveService driveService() throws GeneralSecurityException, IOException {
     final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
     GoogleCredentials credentials = GoogleCredentials.fromStream(fileCredentials.getInputStream())
-                                                     .createScoped(Collections.singleton(DriveScopes.DRIVE));
+      .createScoped(Collections.singleton(DriveScopes.DRIVE));
     Drive service = new Drive.Builder(HTTP_TRANSPORT, GsonFactory.getDefaultInstance(), new HttpCredentialsAdapter(credentials))
-            .setApplicationName(applicationName)
-            .build();
+      .setApplicationName(applicationName)
+      .build();
     String directoryId = service.files().list().execute().getFiles().stream()
-                                .filter(f -> "application/vnd.google-apps.folder".equalsIgnoreCase(f.getMimeType()))
-                                .filter(f -> sharedDirectory.equalsIgnoreCase(f.getName()))
-                                .findFirst()
-                                .map(File::getId)
-                                .orElseThrow(() -> new RuntimeException("shared directory not found, cannot start the service"));
+      .filter(f -> "application/vnd.google-apps.folder".equalsIgnoreCase(f.getMimeType()))
+      .filter(f -> sharedDirectory.equalsIgnoreCase(f.getName()))
+      .findFirst()
+      .map(File::getId)
+      .orElseThrow(() -> new RuntimeException("shared directory not found, cannot start the service"));
     return DriveService.builder()
-                       .drive(service)
-                       .sharedFolderId(directoryId)
-                       .build();
+      .drive(service)
+      .sharedFolderId(directoryId)
+      .build();
   }
 
 }
