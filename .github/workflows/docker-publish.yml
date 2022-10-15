@@ -20,12 +20,12 @@ jobs:
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
-        uses: docker/metadata-action@2.1.0
+        uses: docker/metadata-action@4.1.0
         with:
           images: nbittich/drive-sync
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@2.1.0
+        uses: docker/build-push-action@3.2.0
         with:
           context: .
           push: true
