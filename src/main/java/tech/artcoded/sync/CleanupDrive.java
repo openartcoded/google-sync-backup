@@ -15,7 +15,7 @@ public class CleanupDrive {
     this.driveService = driveService;
   }
 
-  @Value("${application.cleanup.drive")
+  @Value("${application.cleanup.drive}")
   private Boolean cleanupDrive;
 
   @PostConstruct
