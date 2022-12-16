@@ -23,10 +23,10 @@ public class CleanupDrive {
     // cleanup when drive is full
     if (cleanupDrive) {
         var drive = this.driveService.getDrive();
-        var files = drive.files().list().execute();
-        for(var fileId: files.keySet()) {
-          drive.files().delete(fileId).execute();
-        }
+        // var files = drive.files().list().execute();
+        // for(var fileId: files.keySet()) {
+        //   drive.files().delete(fileId).execute();
+        // }
         drive.files().emptyTrash().execute();
     }
   }
