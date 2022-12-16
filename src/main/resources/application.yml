@@ -1,6 +1,6 @@
 application:
   cleanup:
-    drive: false
+    drive: ${CLEANUP_DRIVE:false}
   pathToSync: ${PATH_TO_SYNC:/tmp/some-dir}
   idempotentFilePath: ${IDEM_POTENT_FILE_PATH:/tmp/idempot}
 spring:
