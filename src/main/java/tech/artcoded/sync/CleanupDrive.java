@@ -16,7 +16,7 @@ public class CleanupDrive {
   }
 
   @Value("${application.cleanup.drive")
-  private boolean cleanupDrive;
+  private Boolean cleanupDrive;
 
   @PostConstruct
   public void cleanup() throws IOException {
