@@ -26,8 +26,16 @@ public class SyncRouteBuilder extends RouteBuilder {
   public void configure() throws Exception {
     onException(Exception.class)
       .handled(true)
-      .log("IOException occurred due: ${exception.message}")
+      .transform().simple("Exception occurred due: ${exception.message}")
+      .log("${body}")
+      .doTry()
+        .setHeader(CORRELATION_ID, body())
+        .setHeader(HEADER_TITLE, exchangeProperty(HEADER_TITLE))
+        .setHeader(HEADER_TYPE, exchangeProperty(HEADER_TYPE))
+        .to(ExchangePattern.InOnly, NOTIFICATION_ENDPOINT)
+      .endDoTry()
     ;
+
     from("file:{{application.pathToSync}}?noop=true&idempotent=true&idempotentRepository=#fileIdempotentRepository")
       .routeId("SyncRoute::Entrypoint")
       .log("receiving file '${headers.%s}', will sync it to drive".formatted(Exchange.FILE_NAME))

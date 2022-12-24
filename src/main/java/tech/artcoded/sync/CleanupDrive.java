@@ -31,8 +31,8 @@ public class CleanupDrive {
     if (cleanupDrive) {
         var drive = this.driveService.getDrive();
         FileList files = drive.files().list().execute();
-        log.info("debug: {}",files);
-        List<File> gFiles = (List<File>)files.get("files");
+        log.info("files being deleted: {}",files);
+        List<File> gFiles = files.getFiles();
         for(var gFile: gFiles) {
           try {
             drive.files().delete(gFile.getId()).execute();
