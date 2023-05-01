@@ -5,8 +5,10 @@ import org.apache.camel.Exchange;
 import org.apache.camel.ExchangePattern;
 import org.apache.camel.Header;
 import org.apache.camel.builder.RouteBuilder;
+import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
 import java.io.IOException;
 
 @Component
@@ -25,34 +27,35 @@ public class SyncRouteBuilder extends RouteBuilder {
   @Override
   public void configure() throws Exception {
     onException(Exception.class)
-      .handled(true)
-      .transform().simple("Exception occurred due: ${exception.message}")
-      .log("${body}")
-      .doTry()
+        .handled(true)
+        .transform().simple("Exception occurred due: ${exception.message}")
+        .log("${body}")
+        .doTry()
         .setHeader(CORRELATION_ID, body())
         .setHeader(HEADER_TITLE, exchangeProperty(HEADER_TITLE))
         .setHeader(HEADER_TYPE, exchangeProperty(HEADER_TYPE))
         .to(ExchangePattern.InOnly, NOTIFICATION_ENDPOINT)
-      .endDoTry()
-    ;
+        .endDoTry();
 
     from("file:{{application.pathToSync}}?noop=true&idempotent=true&idempotentRepository=#fileIdempotentRepository")
-      .routeId("SyncRoute::Entrypoint")
-      .log("receiving file '${headers.%s}', will sync it to drive".formatted(Exchange.FILE_NAME))
-      .setProperty(HEADER_TITLE, simple("'${headers.%s}', has been uploaded to drive".formatted(Exchange.FILE_NAME)))
-      .setProperty(HEADER_TYPE, constant(SYNC_DATA_DRIVE))
-      .convertBodyTo(byte[].class)
-      .bean(() -> this, "sync")
-      .setHeader(CORRELATION_ID, body())
-      .setHeader(HEADER_TITLE, exchangeProperty(HEADER_TITLE))
-      .setHeader(HEADER_TYPE, exchangeProperty(HEADER_TYPE))
-      .to(ExchangePattern.InOnly, NOTIFICATION_ENDPOINT)
-    ;
+        .routeId("SyncRoute::Entrypoint")
+        .log("receiving file '${headers.%s}', will sync it to drive".formatted(Exchange.FILE_NAME))
+        .setProperty(HEADER_TITLE, simple("'${headers.%s}', has been uploaded to drive".formatted(Exchange.FILE_NAME)))
+        .setProperty(HEADER_TYPE, constant(SYNC_DATA_DRIVE))
+        .bean(() -> this, "sync")
+        .setHeader(CORRELATION_ID, body())
+        .setHeader(HEADER_TITLE, exchangeProperty(HEADER_TITLE))
+        .setHeader(HEADER_TYPE, exchangeProperty(HEADER_TYPE))
+        .to(ExchangePattern.InOnly, NOTIFICATION_ENDPOINT);
   }
 
-  String sync(@Body byte[] file,
-              @Header(Exchange.FILE_NAME) String fileName,
-              @Header(Exchange.FILE_CONTENT_TYPE) String contentType) throws IOException {
-    return driveService.upload(contentType, fileName, file);
+  String sync(@Body File file,
+      @Header(Exchange.FILE_NAME) String fileName,
+      @Header(Exchange.FILE_CONTENT_TYPE) String contentType) throws IOException {
+    try (var is = FileUtils.openInputStream(file)) {
+      return driveService.upload(contentType, fileName, is);
+    } catch (Exception ex) {
+      throw new RuntimeException(ex);
+    }
   }
 }
