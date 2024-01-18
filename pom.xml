@@ -15,7 +15,7 @@
   <name>sync-folder</name>
   <description>Google drive sync for artcoded</description>
   <properties>
-    <java.version>20</java.version>
+    <java.version>21</java.version>
     <lombok.version>1.18.30</lombok.version>
     <camel.version>4.3.0</camel.version>
     <drive.version>v3-rev20230822-2.0.0</drive.version>
