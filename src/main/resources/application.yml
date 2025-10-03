@@ -1,4 +1,5 @@
 application:
+  auto-cleanup-disabled: ${AUTO_CLEANUP_DISABLED:false}
   cleanup:
     drive: ${CLEANUP_DRIVE:false}
   pathToSync: ${PATH_TO_SYNC:/tmp/some-dir}

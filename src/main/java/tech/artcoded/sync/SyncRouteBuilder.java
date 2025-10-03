@@ -6,6 +6,7 @@ import org.apache.camel.ExchangePattern;
 import org.apache.camel.Header;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.commons.io.FileUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import lombok.SneakyThrows;
@@ -21,6 +22,9 @@ public class SyncRouteBuilder extends RouteBuilder {
   public static final String CORRELATION_ID = "CorrelationId";
   public static final String NOTIFICATION_ENDPOINT = "jms:topic:notification";
   private final DriveService driveService;
+
+  @Value("application.auto-cleanup-disabled")
+  private boolean autocleanupDisabled;
 
   public SyncRouteBuilder(DriveService driveService) {
     this.driveService = driveService;
@@ -40,6 +44,7 @@ public class SyncRouteBuilder extends RouteBuilder {
         .endDoTry();
 
     from("timer://foo?fixedRate=true&period=7200000")
+        .disabled(autocleanupDisabled)
         .routeId("SyncRoute::ScheduledDeletion")
         .log("running scheduled deletion on google drive...")
         .bean(() -> this, "scheduledDeletion");
