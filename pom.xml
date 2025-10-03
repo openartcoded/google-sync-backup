@@ -9,7 +9,7 @@
   </parent>
   <groupId>tech.artcoded</groupId>
   <artifactId>sync-folder</artifactId>
-  <version>2026.0.2-SNAPSHOT</version>
+  <version>2026.0.2</version>
   <name>sync-folder</name>
   <description>Google drive sync for artcoded</description>
   <properties>
@@ -28,7 +28,7 @@
     <connection>
             scm:git:git@github.com:openartcoded/google-sync-backup.git
         </connection>
-    <tag>2024.0.4</tag>
+    <tag>2026.0.2</tag>
   </scm>
   <dependencies>
     <dependency>
