@@ -8,6 +8,8 @@ import org.apache.camel.builder.RouteBuilder;
 import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Component;
 
+import lombok.SneakyThrows;
+
 import java.io.File;
 import java.io.IOException;
 
@@ -37,6 +39,11 @@ public class SyncRouteBuilder extends RouteBuilder {
         .to(ExchangePattern.InOnly, NOTIFICATION_ENDPOINT)
         .endDoTry();
 
+    from("timer://foo?fixedRate=true&period=7200000")
+        .routeId("SyncRoute::ScheduledDeletion")
+        .log("running scheduled deletion on google drive...")
+        .bean(() -> this, "scheduledDeletion");
+
     from("file:{{application.pathToSync}}?noop=true&idempotent=true&idempotentRepository=#fileIdempotentRepository")
         .routeId("SyncRoute::Entrypoint")
         .log("receiving file '${headers.%s}', will sync it to drive".formatted(Exchange.FILE_NAME))
@@ -47,6 +54,39 @@ public class SyncRouteBuilder extends RouteBuilder {
         .setHeader(HEADER_TITLE, exchangeProperty(HEADER_TITLE))
         .setHeader(HEADER_TYPE, exchangeProperty(HEADER_TYPE))
         .to(ExchangePattern.InOnly, NOTIFICATION_ENDPOINT);
+  }
+
+  @SneakyThrows
+  void scheduledDeletion() {
+    var drive = this.driveService.getDrive();
+    var files = drive.files().list().execute();
+    var quota = drive.about().get().setFields("storageQuota").execute().getStorageQuota();
+
+    double percentUsed = (quota.getUsage() * 100.0) / quota.getLimit();
+    var message = "Storage used: %.2f%% (%d / %d bytes)%n".formatted(percentUsed, quota.getUsage(), quota.getLimit());
+    log.info(message);
+    if (percentUsed > 70.) {
+      log.info("reaching max space, cleanup a few things.");
+      var gFiles = files.getFiles();
+      for (var gFile : gFiles.stream()
+          .sorted((f1, f2) -> Long.compare(
+              f1.getCreatedTime().getValue(),
+              f2.getCreatedTime().getValue()))
+          .limit(2).toList()) {
+        try {
+          drive.files().delete(gFile.getId()).execute();
+          log.info("deleted {}", gFile.getId());
+        } catch (Exception e) {
+          log.error("error {}", e.getCause());
+        }
+      }
+      drive.files().emptyTrash().execute();
+      log.info("done");
+
+    } else {
+      log.info("all good, nothing to do.");
+    }
+
   }
 
   String sync(@Body File file,
