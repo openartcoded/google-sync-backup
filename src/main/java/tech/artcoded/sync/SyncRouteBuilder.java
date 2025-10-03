@@ -23,10 +23,12 @@ public class SyncRouteBuilder extends RouteBuilder {
   public static final String NOTIFICATION_ENDPOINT = "jms:topic:notification";
   private final DriveService driveService;
 
-  @Value("${application.auto-cleanup-disabled}")
-  private boolean autocleanupDisabled;
+  private final boolean autocleanupDisabled;
 
-  public SyncRouteBuilder(DriveService driveService) {
+  public SyncRouteBuilder(DriveService driveService,
+      @Value("${application.auto-cleanup-disabled}") boolean autocleanupDisabled) {
+    this.autocleanupDisabled = autocleanupDisabled;
+    log.info("autocleanupDisabled is {}", autocleanupDisabled);
     this.driveService = driveService;
   }
 
@@ -43,11 +45,13 @@ public class SyncRouteBuilder extends RouteBuilder {
         .to(ExchangePattern.InOnly, NOTIFICATION_ENDPOINT)
         .endDoTry();
 
-    from("timer://foo?fixedRate=true&period=7200000")
-        .disabled(autocleanupDisabled)
+    from("timer://scheduleDeletion?fixedRate=true&period=7200000")
         .routeId("SyncRoute::ScheduledDeletion")
+        .choice().when((_) -> !autocleanupDisabled)
         .log("running scheduled deletion on google drive...")
-        .bean(() -> this, "scheduledDeletion");
+        .bean(() -> this, "scheduledDeletion")
+        .otherwise().log("route disabled.")
+        .endChoice();
 
     from("file:{{application.pathToSync}}?noop=true&idempotent=true&idempotentRepository=#fileIdempotentRepository")
         .routeId("SyncRoute::Entrypoint")

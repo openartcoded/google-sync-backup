@@ -14,4 +14,5 @@ spring:
 camel:
   springboot:
     name: camel-${spring.application.name}
-  main-run-controller: true
+  main:
+    run-controller: true
