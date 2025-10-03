@@ -23,7 +23,7 @@ public class SyncRouteBuilder extends RouteBuilder {
   public static final String NOTIFICATION_ENDPOINT = "jms:topic:notification";
   private final DriveService driveService;
 
-  @Value("application.auto-cleanup-disabled")
+  @Value("${application.auto-cleanup-disabled}")
   private boolean autocleanupDisabled;
 
   public SyncRouteBuilder(DriveService driveService) {
