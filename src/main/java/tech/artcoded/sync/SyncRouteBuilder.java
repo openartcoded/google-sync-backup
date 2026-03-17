@@ -39,9 +39,9 @@ public class SyncRouteBuilder extends RouteBuilder {
         .transform().simple("Exception occurred due: ${exception.message}")
         .log("${body}")
         .doTry()
-        .setHeader(CORRELATION_ID, body())
-        .setHeader(HEADER_TITLE, exchangeProperty(HEADER_TITLE))
-        .setHeader(HEADER_TYPE, exchangeProperty(HEADER_TYPE))
+        .setHeader(CORRELATION_ID, constant("GOOGLE_DRIVE_ERROR"))
+        .setHeader(HEADER_TITLE, body())
+        .setHeader(HEADER_TYPE, constant(SYNC_DATA_DRIVE))
         .to(ExchangePattern.InOnly, NOTIFICATION_ENDPOINT)
         .endDoTry();
 
@@ -68,7 +68,7 @@ public class SyncRouteBuilder extends RouteBuilder {
   @SneakyThrows
   void scheduledDeletion() {
     var drive = this.driveService.getDrive();
-    var files = drive.files().list().execute();
+    var files = drive.files().list().setFields("files(id,name,createdTime)").execute();
     var quota = drive.about().get().setFields("storageQuota").execute().getStorageQuota();
 
     double percentUsed = (quota.getUsage() * 100.0) / quota.getLimit();
