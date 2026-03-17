@@ -68,7 +68,10 @@ public class SyncRouteBuilder extends RouteBuilder {
   @SneakyThrows
   void scheduledDeletion() {
     var drive = this.driveService.getDrive();
-    var files = drive.files().list().setFields("files(id,name,createdTime)").execute();
+    var files = drive.files().list().setFields("files(id,name,createdTime)")
+    .setQ("'me' in owners")
+     .setSupportsAllDrives(true)        // include shared drives
+    .setIncludeItemsFromAllDrives(true).execute();
     var quota = drive.about().get().setFields("storageQuota").execute().getStorageQuota();
 
     double percentUsed = (quota.getUsage() * 100.0) / quota.getLimit();
@@ -83,7 +86,8 @@ public class SyncRouteBuilder extends RouteBuilder {
               f2.getCreatedTime().getValue()))
           .limit(2).toList()) {
         try {
-          drive.files().delete(gFile.getId()).execute();
+          log.info("deleting {}", gFile.getName());
+          drive.files().delete(gFile.getId()).setSupportsAllDrives(true).execute();
           log.info("deleted {}", gFile.getId());
         } catch (Exception e) {
           log.error("error deleting {}: ", gFile.getId(), e);
