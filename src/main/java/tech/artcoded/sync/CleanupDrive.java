@@ -29,20 +29,22 @@ public class CleanupDrive {
   public void cleanup() throws IOException {
     // cleanup when drive is full
     if (cleanupDrive) {
-        var drive = this.driveService.getDrive();
-        FileList files = drive.files().list().execute();
-        log.info("files being deleted: {}",files);
-        List<File> gFiles = files.getFiles();
-        for(var gFile: gFiles) {
-          try {
-            drive.files().delete(gFile.getId()).execute();
-            log.info("deleted {}",gFile.getId());
-          }catch(Exception e) {
-            log.error("error {}", e.getCause());
-          }
+      var drive = this.driveService.getDrive();
+      FileList files = drive.files().list()
+          .setIncludeItemsFromAllDrives(true)
+          .setFields("files(id,name)").execute();
+      log.info("files being deleted: {}", files);
+      List<File> gFiles = files.getFiles();
+      for (var gFile : gFiles) {
+        try {
+          drive.files().delete(gFile.getId()).setSupportsAllDrives(true).execute();
+          log.info("deleted {}", gFile.getId());
+        } catch (Exception e) {
+          log.error("error {}", e.getMessage());
         }
-        drive.files().emptyTrash().execute();
-        log.info("done");
+      }
+      drive.files().emptyTrash().execute();
+      log.info("done");
     }
   }
 }
