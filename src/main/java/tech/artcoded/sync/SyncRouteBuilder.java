@@ -86,7 +86,7 @@ public class SyncRouteBuilder extends RouteBuilder {
           drive.files().delete(gFile.getId()).execute();
           log.info("deleted {}", gFile.getId());
         } catch (Exception e) {
-          log.error("error {}", e.getCause());
+          log.error("error deleting {}: ", gFile.getId(), e);
         }
       }
       drive.files().emptyTrash().execute();
