@@ -78,13 +78,6 @@
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <!-- tests replace the jms component by seda (no broker needed) -->
-      <groupId>org.apache.camel</groupId>
-      <artifactId>camel-seda</artifactId>
-      <version>${camel.version}</version>
-      <scope>test</scope>
-    </dependency>
   </dependencies>
 
   <build>
