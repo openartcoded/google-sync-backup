@@ -1,15 +1,10 @@
 package tech.artcoded.sync;
 
 import java.io.IOException;
-import java.util.List;
-
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
-import com.google.api.services.drive.model.File;
-import com.google.api.services.drive.model.FileList;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -23,25 +18,29 @@ public class CleanupDrive {
   }
 
   @Value("${application.cleanup.drive}")
-  private Boolean cleanupDrive;
+  private boolean cleanupDrive;
 
   @PostConstruct
   public void cleanup() throws IOException {
     // cleanup when drive is full
     if (cleanupDrive) {
       var drive = this.driveService.getDrive();
-      FileList files = drive.files().list().setQ("'me' in owners").setSupportsAllDrives(true)
-          .setIncludeItemsFromAllDrives(true).execute();
-      log.info("files being deleted: {}", files);
-      List<File> gFiles = files.getFiles();
-      for (var gFile : gFiles) {
-        try {
-          drive.files().delete(gFile.getId()).setSupportsAllDrives(true).execute();
-          log.info("deleted {}", gFile.getId());
-        } catch (Exception e) {
-          log.error("error {}", e.getCause());
+      // every page (the first one only has 100 files), never the folders
+      String pageToken = null;
+      do {
+        var files = drive.files().list().setQ(DriveQueries.OWNED_FILES)
+            .setFields("nextPageToken, files(id, name)").setSupportsAllDrives(true)
+            .setIncludeItemsFromAllDrives(true).setPageToken(pageToken).execute();
+        for (var gFile : files.getFiles()) {
+          try {
+            log.info("deleting {} ({})", gFile.getName(), gFile.getId());
+            drive.files().delete(gFile.getId()).setSupportsAllDrives(true).execute();
+          } catch (Exception e) {
+            log.error("error deleting {}", gFile.getId(), e);
+          }
         }
-      }
+        pageToken = files.getNextPageToken();
+      } while (pageToken != null);
       drive.files().emptyTrash().execute();
       log.info("done");
     }

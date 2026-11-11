@@ -21,6 +21,8 @@ public class SyncRouteBuilder extends RouteBuilder {
   public static final String SYNC_DATA_DRIVE = "SYNC_DATA_DRIVE";
   public static final String CORRELATION_ID = "CorrelationId";
   public static final String NOTIFICATION_ENDPOINT = "jms:topic:notification";
+  static final double MAX_PERCENT_USED = 70.;
+  static final int FILES_DELETED_PER_RUN = 2;
   private final DriveService driveService;
 
   private final boolean autocleanupDisabled;
@@ -66,25 +68,27 @@ public class SyncRouteBuilder extends RouteBuilder {
   }
 
   @SneakyThrows
-  void scheduledDeletion() {
+  public void scheduledDeletion() {
     var drive = this.driveService.getDrive();
-    var files = drive.files().list().setFields("files(id,name,createdTime)")
-    .setQ("'me' in owners")
-     .setSupportsAllDrives(true)        // include shared drives
-    .setIncludeItemsFromAllDrives(true).execute();
     var quota = drive.about().get().setFields("storageQuota").execute().getStorageQuota();
-
-    double percentUsed = (quota.getUsage() * 100.0) / quota.getLimit();
-    var message = "Storage used: %.2f%% (%d / %d bytes)%n".formatted(percentUsed, quota.getUsage(), quota.getLimit());
-    log.info(message);
-    if (percentUsed > 70.) {
+    var percentUsed = DriveQueries.percentUsed(quota.getUsage(), quota.getLimit());
+    if (percentUsed.isEmpty()) {
+      // no limit (or unknown): nothing to free
+      log.info("no storage limit, nothing to do.");
+      return;
+    }
+    log.info("Storage used: %.2f%% (%d / %d bytes)".formatted(percentUsed.getAsDouble(), quota.getUsage(),
+        quota.getLimit()));
+    if (percentUsed.getAsDouble() > MAX_PERCENT_USED) {
       log.info("reaching max space, cleanup a few things.");
-      var gFiles = files.getFiles();
-      for (var gFile : gFiles.stream()
-          .sorted((f1, f2) -> Long.compare(
-              f1.getCreatedTime().getValue(),
-              f2.getCreatedTime().getValue()))
-          .limit(2).toList()) {
+      // the 2 oldest files: sorted by drive, over all the files and not only the first page of 100
+      var oldest = drive.files().list().setFields("files(id,name,createdTime)")
+          .setQ(DriveQueries.OWNED_FILES)
+          .setOrderBy("createdTime")
+          .setPageSize(FILES_DELETED_PER_RUN)
+          .setSupportsAllDrives(true) // include shared drives
+          .setIncludeItemsFromAllDrives(true).execute().getFiles();
+      for (var gFile : oldest) {
         try {
           log.info("deleting {}", gFile.getName());
           drive.files().delete(gFile.getId()).setSupportsAllDrives(true).execute();
@@ -102,7 +106,7 @@ public class SyncRouteBuilder extends RouteBuilder {
 
   }
 
-  String sync(@Body File file,
+  public String sync(@Body File file,
       @Header(Exchange.FILE_NAME) String fileName,
       @Header(Exchange.FILE_CONTENT_TYPE) String contentType) throws IOException {
     try (var is = FileUtils.openInputStream(file)) {

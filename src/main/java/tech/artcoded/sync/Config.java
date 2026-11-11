@@ -5,7 +5,6 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
-import com.google.api.services.drive.model.File;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
 import org.apache.camel.spi.IdempotentRepository;
@@ -45,12 +44,8 @@ public class Config {
     Drive service = new Drive.Builder(HTTP_TRANSPORT, GsonFactory.getDefaultInstance(), new HttpCredentialsAdapter(credentials))
       .setApplicationName(applicationName)
       .build();
-    String directoryId = service.files().list().execute().getFiles().stream()
-      .filter(f -> "application/vnd.google-apps.folder".equalsIgnoreCase(f.getMimeType()))
-      .filter(f -> sharedDirectory.equalsIgnoreCase(f.getName()))
-      .findFirst()
-      .map(File::getId)
-      .orElseThrow(() -> new RuntimeException("shared directory not found, cannot start the service"));
+    // all pages: the first one only has 100 files, the folder could be missing from it
+    String directoryId = DriveService.findFolderId(service, sharedDirectory);
     return DriveService.builder()
       .drive(service)
       .sharedFolderId(directoryId)
